@@ -1,0 +1,3 @@
+-keep class com.snapper.android.xposed.** { *; }
+-keep class com.google.mlkit.**.*Registrar { public <init>(); }
+-dontwarn de.robv.android.xposed.**

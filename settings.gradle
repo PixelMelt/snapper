@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "SnapperAndroid"
+include(":app")
+include(":xposed-stubs")
+project(":xposed-stubs").projectDir = file("compile_only/xposed-api-stubs")
+include(":provider-fixture")
+project(":provider-fixture").projectDir = file("tools/provider-fixture")

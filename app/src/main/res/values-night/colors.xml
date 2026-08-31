@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="snapper_background">#0A0E14</color>
+    <color name="snapper_navigation">#080B10</color>
+    <color name="snapper_text_primary">#FFF5F7FB</color>
+    <color name="snapper_text_secondary">#FF9DA9BB</color>
+    <color name="snapper_ripple">#2EFFFFFF</color>
+    <color name="snapper_chooser_surface">#FF1F2228</color>
+    <color name="snapper_chooser_border">#FF424650</color>
+    <color name="snapper_chooser_text_primary">#FFFFFFFF</color>
+    <color name="snapper_chooser_text_secondary">#FFB7BCC6</color>
+    <color name="snapper_chooser_divider">#FF373B44</color>
+    <color name="snapper_chooser_accent">#FF91BAFF</color>
+    <color name="snapper_chooser_scrim">#A8000000</color>
+    <color name="snapper_menu_surface">@android:color/system_surface_container_dark</color>
+    <color name="snapper_menu_text">@android:color/system_on_surface_dark</color>
+    <color name="snapper_menu_icon">@android:color/system_on_surface_variant_dark</color>
+    <color name="snapper_menu_error">@android:color/system_error_dark</color>
+</resources>

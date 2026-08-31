@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:colorAccent">@color/snapper_blue</item>
+        <item name="android:colorControlHighlight">@color/snapper_ripple</item>
+        <item name="android:textColorPrimary">@color/snapper_text_primary</item>
+        <item name="android:textColorSecondary">@color/snapper_text_secondary</item>
+        <item name="android:navigationBarColor">@color/snapper_navigation</item>
+        <item name="android:statusBarColor">@color/snapper_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:navigationBarDividerColor">@color/snapper_navigation</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDisablePreview">false</item>
+        <item name="android:windowBackground">@color/snapper_background</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+
+    <style name="InvisibleTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:colorAccent">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="SnapperPinPopupTheme" parent="android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:popupMenuStyle">@style/SnapperPinPopupMenuStyle</item>
+        <item name="android:textColorPrimary">@color/snapper_menu_text</item>
+        <item name="android:colorControlNormal">@color/snapper_menu_icon</item>
+    </style>
+
+    <style name="SnapperPinPopupMenuStyle" parent="@android:style/Widget.DeviceDefault.PopupMenu">
+        <item name="android:popupBackground">@drawable/snapper_pin_popup_background</item>
+        <item name="android:popupElevation">3dp</item>
+    </style>
+</resources>

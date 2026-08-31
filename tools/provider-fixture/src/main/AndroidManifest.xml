@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="false"
+        android:label="Snapper provider fixture"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity
+            android:name=".FixtureActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".OcrFixtureActivity"
+            android:exported="true"
+            android:label="Snapper OCR fixture"
+            android:screenOrientation="portrait" />
+
+        <activity-alias
+            android:name=".KeepPinAction"
+            android:exported="true"
+            android:icon="@android:drawable/ic_menu_view"
+            android:label="Fixture Keep Pin"
+            android:targetActivity=".FixtureActivity">
+            <intent-filter>
+                <action android:name="com.snapper.android.action.PROCESS_IMAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/png" />
+            </intent-filter>
+            <meta-data
+                android:name="com.snapper.android.action_provider.ID"
+                android:value="com.snapper.fixture.keep" />
+            <meta-data
+                android:name="com.snapper.android.action_provider.REMOVE_SNAP_AFTER_PROCESSING"
+                android:value="false" />
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ConsumePinAction"
+            android:exported="true"
+            android:icon="@android:drawable/ic_menu_delete"
+            android:label="Fixture Consume Pin"
+            android:targetActivity=".FixtureActivity">
+            <intent-filter>
+                <action android:name="com.snapper.android.action.PROCESS_IMAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/png" />
+            </intent-filter>
+            <meta-data
+                android:name="com.snapper.android.action_provider.ID"
+                android:value="com.snapper.fixture.consume" />
+        </activity-alias>
+    </application>
+</manifest>

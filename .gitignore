@@ -1,0 +1,10 @@
+.gradle/
+.gradle-user/
+.android-user/
+.tools/
+**/build/
+local.properties
+*.iml
+.codex
+.agents
+.kotlin

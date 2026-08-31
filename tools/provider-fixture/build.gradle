@@ -1,0 +1,42 @@
+apply plugin: "com.android.application"
+
+android {
+    namespace "com.snapper.fixture"
+    compileSdk 37
+    buildToolsVersion "36.0.0"
+
+    defaultConfig {
+        applicationId "com.snapper.fixture"
+        minSdk 34
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        debug {
+            def localKeystore = rootProject.file(".tools/android-debug.keystore")
+            if (localKeystore.exists()) {
+                storeFile localKeystore
+                storePassword "android"
+                keyAlias "androiddebugkey"
+                keyPassword "android"
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+}
