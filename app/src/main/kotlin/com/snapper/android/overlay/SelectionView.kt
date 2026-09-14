@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.animation.DecelerateInterpolator
@@ -95,6 +96,7 @@ internal class SelectionView(
     private var accessibilityScrollX = Float.NaN
     private var accessibilityMaximumScrollX = Float.NaN
     private var accessibilityPending = false
+    private var gestureExclusion: List<Rect> = emptyList()
 
     var actionScrollX = 0f
         private set
@@ -110,6 +112,33 @@ internal class SelectionView(
         }
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         ViewCompat.setAccessibilityDelegate(this, accessibility)
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        updateGestureExclusion()
+    }
+
+    /**
+     * Crop drags start and end anywhere on the overlay, including the left and right strips the
+     * system reserves for the back gesture, so a drag across the full width would otherwise be
+     * stolen as a back swipe. Claim the whole overlay instead.
+     *
+     * The window manager honours only the bottom-most 200dp of an exclusion per edge unless the
+     * window asks for sticky-immersive navigation bars, which [suppressSystemGestures] does when
+     * the overlay attaches.
+     */
+    private fun updateGestureExclusion() {
+        val bounds = if (width <= 0 || height <= 0) emptyList() else listOf(Rect(0, 0, width, height))
+        if (bounds == gestureExclusion) return
+        gestureExclusion = bounds
+        systemGestureExclusionRects = bounds
+    }
+
+    private fun suppressSystemGestures() {
+        val controller = windowInsetsController ?: return
+        controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(WindowInsets.Type.navigationBars())
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
@@ -846,6 +875,7 @@ internal class SelectionView(
             postInvalidateOnAnimation()
         }
         applyControlTint()
+        suppressSystemGestures()
         accessibilitySignature = Long.MIN_VALUE
         accessibilityPending = true
         accessibilityScrollX = Float.NaN
