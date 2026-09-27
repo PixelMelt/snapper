@@ -222,7 +222,7 @@ internal class SelectionView(
         }
         painter.drawCropGuides(canvas, selection)
         updateControlBounds()
-        if (!selection.isEmpty) painter.drawCropFrame(canvas, selection)
+        if (!selection.isEmpty) painter.drawCropFrame(canvas, selection, width, height)
         if (selectionReady) painter.drawActionRail(canvas, railIcons, actionScrollX, pressedRailIndex())
         if (controls.bottomControlsVisible) {
             painter.drawBottomControls(
@@ -712,75 +712,93 @@ internal class SelectionView(
 
     private fun hitSelectionGesture(x: Float, y: Float): Int {
         if (selection.isEmpty) return GESTURE_NEW
-        val hit = 22f * density
-        val verticalEndInset = Math.min(4.4f * density, selection.height() / 2f)
-        val horizontalEndInset = Math.min(4.4f * density, selection.width() / 2f)
-        if (Math.abs(x - selection.left) <= hit &&
-            y >= selection.top + verticalEndInset && y <= selection.bottom - verticalEndInset
-        ) {
-            return GESTURE_LEFT
+        val hit = HANDLE_HIT_DP * density
+        val leftRoom = selection.left
+        val rightRoom = width - selection.right
+        val topRoom = selection.top
+        val bottomRoom = height - selection.bottom
+        val horizontal = if (y < selection.top - hit || y > selection.bottom + hit) 0 else nearerHandle(
+            x - selection.left, handleReach(leftRoom, selection.width()), GESTURE_LEFT,
+            selection.right - x, handleReach(rightRoom, selection.width()), GESTURE_RIGHT,
+        )
+        val vertical = if (x < selection.left - hit || x > selection.right + hit) 0 else nearerHandle(
+            y - selection.top, handleReach(topRoom, selection.height()), GESTURE_TOP,
+            selection.bottom - y, handleReach(bottomRoom, selection.height()), GESTURE_BOTTOM,
+        )
+        if (horizontal == 0) return if (vertical == 0) GESTURE_MOVE else vertical
+        if (vertical == 0) return horizontal
+        val horizontalRoom = if (horizontal == GESTURE_LEFT) leftRoom else rightRoom
+        val verticalRoom = if (vertical == GESTURE_TOP) topRoom else bottomRoom
+        if (horizontalRoom >= hit && verticalRoom >= hit) {
+            val verticalEndInset = Math.min(END_INSET_DP * density, selection.height() / 2f)
+            val horizontalEndInset = Math.min(END_INSET_DP * density, selection.width() / 2f)
+            if (y >= selection.top + verticalEndInset && y <= selection.bottom - verticalEndInset) return horizontal
+            if (x >= selection.left + horizontalEndInset && x <= selection.right - horizontalEndInset) return vertical
         }
-        if (Math.abs(x - selection.right) <= hit &&
-            y >= selection.top + verticalEndInset && y <= selection.bottom - verticalEndInset
-        ) {
-            return GESTURE_RIGHT
+        return horizontal or vertical
+    }
+
+    private fun nearerHandle(
+        firstInside: Float,
+        firstReach: Float,
+        first: Int,
+        secondInside: Float,
+        secondReach: Float,
+        second: Int,
+    ): Int {
+        val hit = HANDLE_HIT_DP * density
+        val firstHit = firstInside >= -hit && firstInside <= firstReach
+        val secondHit = secondInside >= -hit && secondInside <= secondReach
+        return when {
+            firstHit && secondHit -> if (Math.abs(firstInside) <= Math.abs(secondInside)) first else second
+            firstHit -> first
+            secondHit -> second
+            else -> 0
         }
-        if (Math.abs(y - selection.top) <= hit &&
-            x >= selection.left + horizontalEndInset && x <= selection.right - horizontalEndInset
-        ) {
-            return GESTURE_TOP
-        }
-        if (Math.abs(y - selection.bottom) <= hit &&
-            x >= selection.left + horizontalEndInset && x <= selection.right - horizontalEndInset
-        ) {
-            return GESTURE_BOTTOM
-        }
-        if (Math.abs(x - selection.left) <= hit && Math.abs(y - selection.top) <= hit) {
-            return GESTURE_LEFT or GESTURE_TOP
-        }
-        if (Math.abs(x - selection.right) <= hit && Math.abs(y - selection.top) <= hit) {
-            return GESTURE_RIGHT or GESTURE_TOP
-        }
-        if (Math.abs(x - selection.left) <= hit && Math.abs(y - selection.bottom) <= hit) {
-            return GESTURE_LEFT or GESTURE_BOTTOM
-        }
-        if (Math.abs(x - selection.right) <= hit && Math.abs(y - selection.bottom) <= hit) {
-            return GESTURE_RIGHT or GESTURE_BOTTOM
-        }
-        return GESTURE_MOVE
+    }
+
+    private fun handleReach(roomOutside: Float, selectionSize: Float): Float {
+        val hit = HANDLE_HIT_DP * density
+        val pinned = clampFloat((hit - roomOutside) / hit, 0f, 1f)
+        val reach = hit + (BORDER_HANDLE_REACH_DP * density - hit) * pinned
+        return Math.min(reach, Math.max(hit, selectionSize / 3f))
     }
 
     private fun isResizeGesture(gesture: Int): Boolean =
         (gesture and (GESTURE_LEFT or GESTURE_TOP or GESTURE_RIGHT or GESTURE_BOTTOM)) != 0
 
     private fun resizeSelection(x: Float, y: Float) {
-        val snappedX = snap(x, 0f, width.toFloat())
-        val snappedY = snap(y, 0f, height.toFloat())
         if ((activeGesture and (GESTURE_LEFT or GESTURE_RIGHT)) != 0) {
-            val anchorX = if ((activeGesture and GESTURE_LEFT) != 0) {
-                gestureStartSelection.right
-            } else {
-                gestureStartSelection.left
-            }
-            selection.left = Math.min(anchorX, snappedX)
-            selection.right = Math.max(anchorX, snappedX)
+            val draggingLeft = (activeGesture and GESTURE_LEFT) != 0
+            val anchorX = if (draggingLeft) gestureStartSelection.right else gestureStartSelection.left
+            val edgeX = if (draggingLeft) gestureStartSelection.left else gestureStartSelection.right
+            val targetX = dragEdge(edgeX, x, startX, width.toFloat())
+            selection.left = Math.min(anchorX, targetX)
+            selection.right = Math.max(anchorX, targetX)
         }
         if ((activeGesture and (GESTURE_TOP or GESTURE_BOTTOM)) != 0) {
-            val anchorY = if ((activeGesture and GESTURE_TOP) != 0) {
-                gestureStartSelection.bottom
-            } else {
-                gestureStartSelection.top
-            }
-            selection.top = Math.min(anchorY, snappedY)
-            selection.bottom = Math.max(anchorY, snappedY)
+            val draggingTop = (activeGesture and GESTURE_TOP) != 0
+            val anchorY = if (draggingTop) gestureStartSelection.bottom else gestureStartSelection.top
+            val edgeY = if (draggingTop) gestureStartSelection.top else gestureStartSelection.bottom
+            val targetY = dragEdge(edgeY, y, startY, height.toFloat())
+            selection.top = Math.min(anchorY, targetY)
+            selection.bottom = Math.max(anchorY, targetY)
         }
     }
 
+    private fun dragEdge(edge: Float, finger: Float, fingerStart: Float, maximum: Float): Float {
+        val threshold = BORDER_SNAP_DP * density
+        val travel = finger - fingerStart
+        if (travel < 0f && finger <= threshold) return 0f
+        if (travel > 0f && finger >= maximum - threshold) return maximum
+        return snap(edge + travel, maximum)
+    }
+
     private fun snapSelectionEdges() {
-        selection.left = snap(selection.left, 0f, width.toFloat())
-        selection.top = snap(selection.top, 0f, height.toFloat())
-        selection.right = snap(selection.right, 0f, width.toFloat())
-        selection.bottom = snap(selection.bottom, 0f, height.toFloat())
+        selection.left = snap(selection.left, width.toFloat())
+        selection.top = snap(selection.top, height.toFloat())
+        selection.right = snap(selection.right, width.toFloat())
+        selection.bottom = snap(selection.bottom, height.toFloat())
         constrainSelection()
     }
 
@@ -799,11 +817,17 @@ internal class SelectionView(
         if (selection.bottom > height) selection.offset(0f, height - selection.bottom)
     }
 
-    private fun snap(value: Float, minimum: Float, maximum: Float): Float {
-        val threshold = 10f * density
-        if (Math.abs(value - minimum) <= threshold) return minimum
-        if (Math.abs(value - maximum) <= threshold) return maximum
-        return clampFloat(value, minimum, maximum)
+    private fun snap(value: Float, maximum: Float): Float {
+        val clamped = clampFloat(value, 0f, maximum)
+        return if (clamped <= maximum - clamped) magnetize(clamped) else maximum - magnetize(maximum - clamped)
+    }
+
+    private fun magnetize(distance: Float): Float {
+        val threshold = BORDER_SNAP_DP * density
+        val zone = BORDER_MAGNET_DP * density
+        if (distance <= threshold) return 0f
+        if (distance >= zone) return distance
+        return (distance - threshold) * zone / (zone - threshold)
     }
 
     private fun hitControl(x: Float, y: Float): Int {
@@ -947,6 +971,12 @@ internal class SelectionView(
         const val VIRTUAL_RAIL_BASE_ID = 1_000
 
         const val MINIMUM_SIZE_PX = 1f
+
+        const val HANDLE_HIT_DP = 22f
+        const val BORDER_HANDLE_REACH_DP = 48f
+        const val END_INSET_DP = 4.4f
+        const val BORDER_SNAP_DP = 16f
+        const val BORDER_MAGNET_DP = 48f
 
         fun mixSignature(signature: Long, value: Int): Long = (signature xor value.toLong()) * 1_099_511_628_211L
     }

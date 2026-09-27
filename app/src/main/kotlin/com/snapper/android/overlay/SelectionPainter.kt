@@ -26,6 +26,7 @@ internal class SelectionPainter(
     private val bitmapSource = Rect()
     private val bitmapTarget = RectF()
     private val drawingBounds = RectF()
+    private val frame = RectF()
 
     init {
         dimPaint.color = Color.argb(128, 0, 0, 0)
@@ -112,35 +113,47 @@ internal class SelectionPainter(
         )
     }
 
-    fun drawCropFrame(canvas: Canvas, selection: RectF) {
+    fun drawCropFrame(canvas: Canvas, selection: RectF, width: Int, height: Int) {
+        val outside = controls.pointPixels(CORNER_OUTSIDE_PT)
+        frame.set(
+            Math.max(selection.left, outside), Math.max(selection.top, outside),
+            Math.min(selection.right, width - outside), Math.min(selection.bottom, height - outside),
+        )
+        if (frame.left >= frame.right) {
+            frame.left = selection.left
+            frame.right = selection.right
+        }
+        if (frame.top >= frame.bottom) {
+            frame.top = selection.top
+            frame.bottom = selection.bottom
+        }
         val cornerWidth = clampFloat(
-            selection.width(), controls.pointPixels(CORNER_MIN_SIZE_PT), controls.pointPixels(CORNER_MAX_SIZE_PT),
+            frame.width(), controls.pointPixels(CORNER_MIN_SIZE_PT), controls.pointPixels(CORNER_MAX_SIZE_PT),
         )
         val cornerHeight = clampFloat(
-            selection.height(), controls.pointPixels(CORNER_MIN_SIZE_PT), controls.pointPixels(CORNER_MAX_SIZE_PT),
+            frame.height(), controls.pointPixels(CORNER_MIN_SIZE_PT), controls.pointPixels(CORNER_MAX_SIZE_PT),
         )
-        val outside = controls.pointPixels(CORNER_OUTSIDE_PT)
         val radius = controls.pointPixels(CORNER_RADIUS_PT)
         val restore = canvas.save()
-        canvas.clipOutRect(selection)
+        canvas.clipOutRect(frame)
         canvas.drawRoundRect(
-            selection.left - outside, selection.top - outside,
-            selection.left - outside + cornerWidth, selection.top - outside + cornerHeight,
+            frame.left - outside, frame.top - outside,
+            frame.left - outside + cornerWidth, frame.top - outside + cornerHeight,
             radius, radius, cornerPaint,
         )
         canvas.drawRoundRect(
-            selection.right - cornerWidth + outside, selection.top - outside,
-            selection.right + outside, selection.top - outside + cornerHeight,
+            frame.right - cornerWidth + outside, frame.top - outside,
+            frame.right + outside, frame.top - outside + cornerHeight,
             radius, radius, cornerPaint,
         )
         canvas.drawRoundRect(
-            selection.left - outside, selection.bottom - cornerHeight + outside,
-            selection.left - outside + cornerWidth, selection.bottom + outside,
+            frame.left - outside, frame.bottom - cornerHeight + outside,
+            frame.left - outside + cornerWidth, frame.bottom + outside,
             radius, radius, cornerPaint,
         )
         canvas.drawRoundRect(
-            selection.right - cornerWidth + outside, selection.bottom - cornerHeight + outside,
-            selection.right + outside, selection.bottom + outside,
+            frame.right - cornerWidth + outside, frame.bottom - cornerHeight + outside,
+            frame.right + outside, frame.bottom + outside,
             radius, radius, cornerPaint,
         )
         canvas.restoreToCount(restore)
